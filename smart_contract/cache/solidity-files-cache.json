@@ -1,0 +1,41 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/gor/Desktop/Education REU/2 семка/ТРР/Работы/Курсовая/Educhain/smart_contract/contracts/EduСhain.sol": {
+      "lastModificationDate": 1746627271831,
+      "contentHash": "e88bd41cfcd7d466fca78403feb2dc8b",
+      "sourceName": "contracts/EduСhain.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "EduChain"
+      ]
+    }
+  }
+}
