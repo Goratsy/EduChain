@@ -1,3 +1,5 @@
+# Модули для JS
 node_modules/
 
-smart_contract/*.env
+# Environment files
+.env
