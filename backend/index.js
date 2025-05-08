@@ -6,6 +6,7 @@ import { isAddress } from './utils/address_validation.js';
 
 // Файл среды
 import dotenv from 'dotenv';
+import { ALL_USERS_ADDRESS } from './utils/get_all_users.js';
 dotenv.config();
 
 const app = express();
@@ -203,18 +204,13 @@ app.post('/add-achievement', async (req, res) => {
 });
 
 // Получить всех пользователей (упрощенная версия)
-// app.get('/users', async (_, res) => {
-//     try {
-//         const admin = await contract.methods.admin().call();
-//         res.json([{
-//             address: admin,
-//             role: 'Admin',
-//             achievements: []
-//         }]);
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// });
+app.get('/users', async (_, res) => {
+    try {
+        res.json(ALL_USERS_ADDRESS);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Получить достижения студента
 app.get('/achievements/:studentAddress', async (req, res) => {
