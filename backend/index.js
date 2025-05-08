@@ -9,32 +9,34 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
+app.use(express.json());
+app.use(cors());
 
-app.use(express.json()); // Настройка формата выдачи информации (json)
-app.use(cors()); // Настройки CORS защиты
-
-// Подключение к Ganache
+// Подключение к Ganache и контракту
 let web3;
 let contract;
 
 try {
     web3 = new Web3(process.env.URL_GANACHE);
     const contractABI = JSON.parse(
-        await readFile(new URL('./EduChain.json', import.meta.url))
+        await readFile(new URL('../smart_contract/artifacts/contracts/EduСhain.sol/EduChain.json', import.meta.url))
     ).abi;
     const contractAddress = process.env.CONTRACT_ADDRESS;
-
-    // Загрузка ABI контракта
     contract = new web3.eth.Contract(contractABI, contractAddress);
+    console.log('✅ Успешное подключение к Ganache и контракту');
 } catch (error) {
-    console.log('❌ Неудачная попытка подключения к локальной сети Ganache')
-    console.log(error);
+    console.error('❌ Ошибка подключения:', error);
+    process.exit(1);
 }
 
-// endpoints
-app.get('/', (_, res) => {
-    res.send('EduChain API is running!');
-});
+// Вспомогательные функции
+const getRoleName = (roleCode) => {
+    const roles = ['None', 'Admin', 'University', 'Student'];
+    return roles[roleCode] || 'Unknown';
+};
+
+// Endpoints
+app.get('/', (_, res) => res.send('EduChain API'));
 
 // Получить админа контракта
 app.get('/admin', async (_, res) => {
@@ -46,11 +48,23 @@ app.get('/admin', async (_, res) => {
     }
 });
 
-// Проверить, является ли адрес университетом
-app.get('/is-university/:address', async (req, res) => {
+// Получить информацию о пользователе
+app.get('/user/:address', async (req, res) => {
     try {
-        const isUniversity = await contract.methods.universities(req.params.address).call();
-        res.json({ isUniversity });
+        const role = await contract.methods.getUserRole(req.params.address).call();
+        const achievements = await contract.methods.getAchievementsByStudent(req.params.address).call();
+        
+        res.json({
+            address: req.params.address,
+            role: getRoleName(role),
+            achievementsCount: achievements.length,
+            achievements: achievements.map(a => ({
+                studentId: a.studentId,
+                courseName: a.courseName,
+                grade: a.grade,
+                university: a.university
+            }))
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -59,121 +73,29 @@ app.get('/is-university/:address', async (req, res) => {
 // Добавить университет (только админ)
 app.post('/add-university', async (req, res) => {
     try {
-        const { universityAddress, fromAddress, privateKey } = req.body;
-
-        // Проверка формата адресов
-        if (isAddress(web3, universityAddress)) {
-            return res.status(400).json({ error: "Неверный формат адреса университета" });
-        }
-
-        if (isAddress(web3, fromAddress)) {
-            return res.status(400).json({ error: "Неверный формат адреса отправителя" });
-        }
-
-        // Проверяем, является ли адрес уже университетом
-        const isAlreadyUniversity = await contract.methods.universities(universityAddress).call();
-        if (isAlreadyUniversity) {
-            return res.status(400).json({ 
-                error: "Университет уже зарегистрирован",
-                universityAddress,
-                isRegistered: true
-            });
-        }
-
-        // Настройка аккаунта
-        const cleanedPrivateKey = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
-        const account = web3.eth.accounts.privateKeyToAccount(cleanedPrivateKey);
-        web3.eth.accounts.wallet.add(account);
-
-        // Проверяем, что отправитель - админ
-        const adminAddress = await contract.methods.admin().call();
-        if (fromAddress.toLowerCase() !== adminAddress.toLowerCase()) {
-            return res.status(403).json({ 
-                error: "Только администратор может добавлять университеты",
-                requiredAdmin: adminAddress,
-                yourAddress: fromAddress
-            });
-        }
-
-        // Отправка транзакции
-        const tx = contract.methods.addUniversity(universityAddress);
-        const gas = await tx.estimateGas({ from: fromAddress });
-        const gasPrice = await web3.eth.getGasPrice();
-
-        const result = await tx.send({
-            from: fromAddress,
-            gas,
-            gasPrice
-        });
-
-        // Успешный ответ
-        res.json({ 
-            success: true,
-            message: "Университет успешно добавлен",
-            transactionHash: result.transactionHash,
-            universityAddress,
-            blockNumber: Number(result.blockNumber)
-        });
-
-    } catch (error) {
-        let errorMessage = error.message;
-        
-        if (error.message.includes("revert Only admin can add universities")) {
-            errorMessage = "Только администратор может добавлять университеты";
-        } else if (error.message.includes("already registered")) {
-            errorMessage = "Этот университет уже зарегистрирован";
-        }
-
-        console.error('Ошибка при добавлении университета:', error);
-        res.status(500).json({ 
-            error: "Ошибка при добавлении университета",
-            details: errorMessage,
-            technicalDetails: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-// Удалить университет (только админ)
-app.post('/remove-university', async (req, res) => {
-    try {
         const { universityAddress, adminAddress, privateKey } = req.body;
 
-        // Валидация адресов
         if (isAddress(web3, universityAddress)) {
-            return res.status(400).json({ error: "Неверный формат адреса университета" });
+            return res.status(400).json({ error: "Invalid university address" });
         }
 
-        if (isAddress(web3, adminAddress)) {
-            return res.status(400).json({ error: "Неверный формат адреса администратора" });
+        const isAdmin = await contract.methods.getUserRole(adminAddress).call() === '1'; // 1 = Admin
+        if (!isAdmin) {
+            return res.status(403).json({ error: "Only admin can add universities" });
         }
 
-        // Проверка существования университета
-        const isUniversity = await contract.methods.universities(universityAddress).call();
-        if (!isUniversity) {
-            return res.status(404).json({ 
-                error: "Университет не найден",
-                universityAddress,
-                isRegistered: false
+        const currentRole = await contract.methods.getUserRole(universityAddress).call();
+        if (currentRole !== '0') { // 0 = None
+            return res.status(400).json({ 
+                error: "Address already has a role",
+                currentRole: getRoleName(currentRole)
             });
         }
 
-        // Проверка прав администратора
-        const contractAdmin = await contract.methods.admin().call();
-        if (adminAddress.toLowerCase() !== contractAdmin.toLowerCase()) {
-            return res.status(403).json({ 
-                error: "Только администратор может удалять университеты",
-                requiredAdmin: contractAdmin,
-                yourAddress: adminAddress
-            });
-        }
-
-        // Настройка аккаунта
-        const cleanedPrivateKey = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
-        const account = web3.eth.accounts.privateKeyToAccount(cleanedPrivateKey);
+        const account = web3.eth.accounts.privateKeyToAccount(privateKey);
         web3.eth.accounts.wallet.add(account);
 
-        // Отправка транзакции
-        const tx = contract.methods.removeUniversity(universityAddress);
+        const tx = contract.methods.addUniversity(universityAddress);
         const gas = await tx.estimateGas({ from: adminAddress });
         const gasPrice = await web3.eth.getGasPrice();
 
@@ -183,28 +105,57 @@ app.post('/remove-university', async (req, res) => {
             gasPrice
         });
 
-        // Успешный ответ
-        res.json({ 
+        res.json({
             success: true,
-            message: "Университет успешно удален",
             transactionHash: result.transactionHash,
-            removedUniversity: universityAddress,
+            universityAddress,
             blockNumber: Number(result.blockNumber)
         });
 
     } catch (error) {
-        console.error('Ошибка при удалении университета:', error);
-        
-        let errorMessage = "Ошибка при удалении университета";
-        if (error.message.includes("Only admin can remove")) {
-            errorMessage = "Только администратор может удалять университеты";
-        } else if (error.message.includes("revert")) {
-            errorMessage = "Ошибка выполнения транзакции";
+        console.error('Add university error:', error);
+        res.status(500).json({ 
+            error: "Failed to add university",
+            details: error.message.includes("revert") ? 
+                error.message.split("revert ")[1] : 
+                error.message
+        });
+    }
+});
+
+// Добавить студента (только университеты)
+app.post('/add-student', async (req, res) => {
+    try {
+        const { studentAddress, universityAddress, privateKey } = req.body;
+
+        const universityRole = await contract.methods.getUserRole(universityAddress).call();
+        if (universityRole !== '2') { // 2 = University
+            return res.status(403).json({ error: "Only universities can add students" });
         }
 
+        const account = web3.eth.accounts.privateKeyToAccount(privateKey);
+        web3.eth.accounts.wallet.add(account);
+
+        const tx = contract.methods.addStudent(studentAddress);
+        const gas = await tx.estimateGas({ from: universityAddress });
+        const gasPrice = await web3.eth.getGasPrice();
+
+        const result = await tx.send({
+            from: universityAddress,
+            gas,
+            gasPrice
+        });
+
+        res.json({
+            success: true,
+            transactionHash: result.transactionHash,
+            studentAddress
+        });
+
+    } catch (error) {
         res.status(500).json({ 
-            error: errorMessage,
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to add student",
+            details: error.message
         });
     }
 });
@@ -212,71 +163,76 @@ app.post('/remove-university', async (req, res) => {
 // Добавить достижение (только университеты)
 app.post('/add-achievement', async (req, res) => {
     try {
-        const { studentId, courseName, grade, fromAddress, privateKey } = req.body;
+        const { studentAddress, studentId, courseName, grade, universityAddress, privateKey } = req.body;
+
+        const senderRole = await contract.methods.getUserRole(universityAddress).call();
+        if (senderRole !== '2') {
+            return res.status(403).json({ error: "Only universities can add achievements" });
+        }
+
+        const studentRole = await contract.methods.getUserRole(studentAddress).call();
+        if (studentRole !== '3') {
+            return res.status(400).json({ error: "Can only add achievements to students" });
+        }
 
         const account = web3.eth.accounts.privateKeyToAccount(privateKey);
         web3.eth.accounts.wallet.add(account);
 
-        const tx = contract.methods.addAchievement(studentId, courseName, grade);
-        const gas = await tx.estimateGas({ from: fromAddress });
+        const tx = contract.methods.addAchievement(studentAddress, studentId, courseName, grade);
+        const gas = await tx.estimateGas({ from: universityAddress });
         const gasPrice = await web3.eth.getGasPrice();
 
         const result = await tx.send({
-            from: fromAddress,
+            from: universityAddress,
             gas,
             gasPrice
         });
 
-        res.json({ transactionHash: result.transactionHash });
+        res.json({
+            success: true,
+            transactionHash: result.transactionHash,
+            achievement: { studentId, courseName, grade }
+        });
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ 
+            error: "Failed to add achievement",
+            details: error.message
+        });
     }
 });
+
+// Получить всех пользователей (упрощенная версия)
+// app.get('/users', async (_, res) => {
+//     try {
+//         const admin = await contract.methods.admin().call();
+//         res.json([{
+//             address: admin,
+//             role: 'Admin',
+//             achievements: []
+//         }]);
+//     } catch (error) {
+//         res.status(500).json({ error: error.message });
+//     }
+// });
 
 // Получить достижения студента
-app.get('/achievements/:studentId', async (req, res) => {
+app.get('/achievements/:studentAddress', async (req, res) => {
     try {
-        const data = await contract.methods.getAchievementsByStudent(req.params.studentId).call();
-
-        const formattedData = data.map(achievement => ({
-            studentId: achievement.studentId,
-            courseName: achievement.courseName,
-            grade: achievement.grade,
-            university: achievement.university
-        }));
-
-        res.json(formattedData);
-    } catch (error) {
-        res.status(500).json({ error: 'Ошибка при запросе, повторите попытку позже!' });
-    }
-});
-
-// Получить общее количество достижений
-app.get('/achievements-count', async (_, res) => {
-    try {
-        const count = await contract.methods.achievements.length().call();
-        res.json({ count });
+        const achievements = await contract.methods.getAchievementsByStudent(req.params.studentAddress).call();
+        res.json(achievements.map(a => ({
+            studentId: a.studentId,
+            courseName: a.courseName,
+            grade: a.grade,
+            university: a.university
+        })));
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Получить информацию о контракте
-app.get('/contract-info', async (_, res) => {
-    try {
-        const admin = await contract.methods.admin().call();
-        const achievementsCount = await contract.methods.achievements.length().call();
-
-        res.json({
-            contractAddress,
-            admin,
-            achievementsCount
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.listen(process.env.SERVER_PORT, () => {
-    console.log(`Server running on port ${process.env.SERVER_PORT}. http://localhost:${process.env.SERVER_PORT}`);
+// Запуск сервера
+const PORT = process.env.SERVER_PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
