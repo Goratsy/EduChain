@@ -53,18 +53,10 @@ app.get('/admin', async (_, res) => {
 app.get('/user/:address', async (req, res) => {
     try {
         const role = await contract.methods.getUserRole(req.params.address).call();
-        const achievements = await contract.methods.getAchievementsByStudent(req.params.address).call();
         
         res.json({
             address: req.params.address,
-            role: getRoleName(role),
-            achievementsCount: achievements.length,
-            achievements: achievements.map(a => ({
-                studentId: a.studentId,
-                courseName: a.courseName,
-                grade: a.grade,
-                university: a.university
-            }))
+            role: getRoleName(role)
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
