@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/gor/Desktop/Education REU/2 семка/ТРР/Работы/Курсовая/Educhain/smart_contract/contracts/EduСhain.sol": {
-      "lastModificationDate": 1746627271831,
-      "contentHash": "e88bd41cfcd7d466fca78403feb2dc8b",
+      "lastModificationDate": 1746704880348,
+      "contentHash": "49b549aba650cf8f3b8023f5ac33308d",
       "sourceName": "contracts/EduСhain.sol",
       "solcConfig": {
         "version": "0.8.20",
