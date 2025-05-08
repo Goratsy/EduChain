@@ -206,7 +206,7 @@ app.post('/add-achievement', async (req, res) => {
 // Получить всех пользователей (упрощенная версия)
 app.get('/users', async (_, res) => {
     try {
-        res.json(ALL_USERS_ADDRESS);
+        res.json({ "users": ALL_USERS_ADDRESS});
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

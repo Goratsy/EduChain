@@ -1,0 +1,272 @@
+openapi: 3.0.0
+info:
+  title: EduChain API
+  description: API для управления академическими достижениями на блокчейне
+  version: 1.0.0
+servers:
+  - url: http://localhost:5555
+    description: Локальный сервер разработки
+
+paths:
+  /:
+    get:
+      summary: Проверка работы API
+      responses:
+        '200':
+          description: API работает
+          content:
+            text/plain:
+              example: "EduChain API"
+
+  /admin:
+    get:
+      summary: Получить адрес администратора контракта
+      responses:
+        '200':
+          description: Адрес администратора
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admin:
+                    type: string
+                    example: "0xA75586e57847CA43540DACFddd88fA4f06DBf34e"
+        '500':
+          description: Ошибка сервера
+
+  /user/{address}:
+    get:
+      summary: Получить информацию о пользователе
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  role:
+                    type: string
+                    enum: [None, Admin, University, Student]
+                  achievementsCount:
+                    type: integer
+                  achievements:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        studentId:
+                          type: string
+                        courseName:
+                          type: string
+                        grade:
+                          type: integer
+                        university:
+                          type: string
+        '500':
+          description: Ошибка сервера
+          
+  /users:
+    get:
+      summary: Получить всех пользователей
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: string
+        '500':
+          description: Ошибка сервера
+
+  /add-university:
+    post:
+      summary: Добавить новый университет (только для админа)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                universityAddress:
+                  type: string
+                adminAddress:
+                  type: string
+                privateKey:
+                  type: string
+              required:
+                - universityAddress
+                - adminAddress
+                - privateKey
+      responses:
+        '200':
+          description: Университет добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  transactionHash:
+                    type: string
+                  universityAddress:
+                    type: string
+                  blockNumber:
+                    type: integer
+        '400':
+          description: Неверный запрос
+        '403':
+          description: Доступ запрещен
+        '500':
+          description: Ошибка сервера
+
+  /add-student:
+    post:
+      summary: Добавить нового студента (только для университетов)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                studentAddress:
+                  type: string
+                universityAddress:
+                  type: string
+                privateKey:
+                  type: string
+              required:
+                - studentAddress
+                - universityAddress
+                - privateKey
+      responses:
+        '200':
+          description: Студент добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  transactionHash:
+                    type: string
+                  studentAddress:
+                    type: string
+        '400':
+          description: Неверный запрос
+        '403':
+          description: Доступ запрещен
+        '500':
+          description: Ошибка сервера
+
+  /add-achievement:
+    post:
+      summary: Добавить достижение студенту (только для университетов)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                studentAddress:
+                  type: string
+                studentId:
+                  type: string
+                courseName:
+                  type: string
+                grade:
+                  type: integer
+                universityAddress:
+                  type: string
+                privateKey:
+                  type: string
+              required:
+                - studentAddress
+                - studentId
+                - courseName
+                - grade
+                - universityAddress
+                - privateKey
+      responses:
+        '200':
+          description: Достижение добавлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  transactionHash:
+                    type: string
+                  achievement:
+                    type: object
+                    properties:
+                      studentId:
+                        type: string
+                      courseName:
+                        type: string
+                      grade:
+                        type: integer
+        '400':
+          description: Неверный запрос
+        '403':
+          description: Доступ запрещен
+        '500':
+          description: Ошибка сервера
+
+  /achievements/{studentAddress}:
+    get:
+      summary: Получить достижения студента
+      parameters:
+        - name: studentAddress
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список достижений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    studentId:
+                      type: string
+                    courseName:
+                      type: string
+                    grade:
+                      type: integer
+                    university:
+                      type: string
+        '500':
+          description: Ошибка сервера
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
