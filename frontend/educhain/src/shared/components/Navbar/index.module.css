@@ -1,0 +1,25 @@
+.link {
+    transition: 0.3s ease-in-out;
+    color: white;
+    text-decoration: none;
+}
+
+.link:hover {
+    opacity: 0.8;
+    transform: scale(1.03);
+}
+
+.current_link {
+    transition: 0.3s ease-in-out;
+    color: white;
+
+    text-decoration: underline;
+    text-decoration-color: white;
+    text-underline-offset: 3px;
+    transform: scale(1.1);
+}
+
+.current_link:hover {
+    opacity: 0.8;
+    transform: scale(1.15);
+}

@@ -4,12 +4,12 @@ interface UsersPageProps {
     
 }
  
-const UsersPagePage: FunctionComponent<UsersPageProps> = () => {
+const UsersPage: FunctionComponent<UsersPageProps> = () => {
     return ( 
         <>
-            UsersPagePage
+            UsersPage
         </>
      );
 }
  
-export default UsersPagePage;
+export default UsersPage;

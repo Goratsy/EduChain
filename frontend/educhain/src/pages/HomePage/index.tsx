@@ -1,14 +1,12 @@
-import type { FunctionComponent } from "react";
-
-interface HomePageProps {
-    
-}
+import Navbar from "../../shared/components/Navbar";
  
-const HomePage: FunctionComponent<HomePageProps> = () => {
+const HomePage = () => {
     return ( 
-        <>
+        <section>
+            <Navbar />
             HomePage
-        </>
+        </section>
+
      );
 }
  
