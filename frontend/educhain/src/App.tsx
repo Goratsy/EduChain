@@ -7,7 +7,6 @@ import AdminPage from './pages/AdminPage';
 import UniversityPage from './pages/UniversityPage';
 
 function App() {
-
   return (
     <>
       <Routes>

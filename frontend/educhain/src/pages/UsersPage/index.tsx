@@ -27,7 +27,7 @@ const UsersPage = () => {
                             <TableRow>
                                 <TableCell>Номера адресов</TableCell>
                                 <TableCell align="right">Адреса</TableCell>
-                                <TableCell align="right">Скопировать</TableCell>
+                                <TableCell align="center">Скопировать</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
