@@ -23,7 +23,7 @@ const Navabar = () => {
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         EduChain
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                         {menuItems.map(item => {
                             return (
                                 <Link to={item.path} key={item.name} className={`${path === item.path ? s.current_link : s.link}`}>

@@ -19,7 +19,7 @@ const UsersPage = () => {
         <>
             <Navbar />
             <Box component="section" sx={{ mt: '2rem', overflow: "hidden" }}>
-                <Typography variant="h4" component="h2" sx={{ textAlign: 'center' }}>Пользователи в системе</Typography>
+                <Typography variant="h4" component="h2" sx={{ textAlign: 'center' }}>Пользователи системы</Typography>
 
                 <TableContainer component={Paper}>
                     <Table sx={{ minWidth: 650 }} aria-label="simple table">
