@@ -3,6 +3,8 @@ import express from 'express';
 import { readFile } from 'fs/promises';
 import cors from 'cors';
 import { isAddress } from './utils/address_validation.js';
+import { getRoleName } from './utils/getRoleName.js';
+
 
 // Файл среды
 import dotenv from 'dotenv';
@@ -29,12 +31,6 @@ try {
     console.error('❌ Ошибка подключения:', error);
     process.exit(1);
 }
-
-// Вспомогательные функции
-const getRoleName = (roleCode) => {
-    const roles = ['None', 'Admin', 'University', 'Student'];
-    return roles[roleCode] || 'Unknown';
-};
 
 // Endpoints
 app.get('/', (_, res) => res.send('EduChain API'));
@@ -80,16 +76,16 @@ app.post('/add-university', async (req, res) => {
             return res.status(400).json({ error: "Invalid university address" });
         }
 
-        const isAdmin = await contract.methods.getUserRole(adminAddress).call() === '1'; // 1 = Admin
-        if (!isAdmin) {
+        const adminRole = await contract.methods.getUserRole(adminAddress).call();
+        if (adminRole !== '1' && adminRole !== 1n) {
             return res.status(403).json({ error: "Only admin can add universities" });
         }
 
         const currentRole = await contract.methods.getUserRole(universityAddress).call();
-        if (currentRole !== '0') { // 0 = None
+        if (currentRole !== '0' && currentRole !== 0n) {
             return res.status(400).json({ 
                 error: "Address already has a role",
-                currentRole: getRoleName(currentRole)
+                currentRole: getRoleName(currentRole.toString())
             });
         }
 
