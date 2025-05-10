@@ -58,7 +58,7 @@ app.get('/user/:address', async (req, res) => {
             achievements: achievements.map(a => ({
                 studentId: a.studentId,
                 courseName: a.courseName,
-                grade: a.grade,
+                grade: Number(a.grade),
                 university: a.university
             }))
         });
@@ -126,7 +126,8 @@ app.post('/add-student', async (req, res) => {
         const { studentAddress, universityAddress, privateKey } = req.body;
 
         const universityRole = await contract.methods.getUserRole(universityAddress).call();
-        if (universityRole !== '2') { // 2 = University
+        
+        if (universityRole !== '2n' && universityRole !== 2n) { 
             return res.status(403).json({ error: "Only universities can add students" });
         }
 
@@ -163,12 +164,12 @@ app.post('/add-achievement', async (req, res) => {
         const { studentAddress, studentId, courseName, grade, universityAddress, privateKey } = req.body;
 
         const senderRole = await contract.methods.getUserRole(universityAddress).call();
-        if (senderRole !== '2') {
+        if (senderRole !== '2' && senderRole !== 2n) {
             return res.status(403).json({ error: "Only universities can add achievements" });
         }
 
         const studentRole = await contract.methods.getUserRole(studentAddress).call();
-        if (studentRole !== '3') {
+        if (studentRole !== '3' && studentRole !== 3n) {
             return res.status(400).json({ error: "Can only add achievements to students" });
         }
 
