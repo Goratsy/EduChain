@@ -50,10 +50,12 @@ const UniversityPage = () => {
 
         addStudent(formDataAddRoleStudent, {
             onSuccess: (data) => {
+                toast.success('Роль успешно назначена!', { autoClose: 2000, position: 'top-left', hideProgressBar: true, pauseOnHover: false })
                 console.log(data);
             },
-            onError: (error) => {
-                console.log(error);    
+            onError: (error: any) => {
+                toast.error(`Ошибка: ${error.response.data.error}`, { autoClose: 4000, position: 'top-left', hideProgressBar: true, pauseOnHover: false })
+                console.log(error);
             }
         });
     }
@@ -69,20 +71,22 @@ const UniversityPage = () => {
     const submitFormDataAddAchievement = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (!Number.isInteger(Number(formDataAddAchievement.grade)) || Number(formDataAddAchievement.grade) < 0) 
+        if (!Number.isInteger(Number(formDataAddAchievement.grade)) || Number(formDataAddAchievement.grade) < 0)
             toast.error(`Ошибка: поле оценки - целое положительное число`, { autoClose: 3000, position: 'top-left', hideProgressBar: true, pauseOnHover: false })
 
         formDataAddAchievement.grade = Number(formDataAddAchievement.grade);
 
         addAchievement(formDataAddAchievement, {
             onSuccess: (data) => {
+                toast.success('Достижение успешно добавлено!', { autoClose: 2000, position: 'top-left', hideProgressBar: true, pauseOnHover: false })
                 console.log(data);
             },
-            onError: (error) => {
-                console.log(error);    
+            onError: (error: any) => {
+                toast.error(`Ошибка: ${error.response.data.error}`, { autoClose: 4000, position: 'top-left', hideProgressBar: true, pauseOnHover: false })
+                console.log(error);
             }
         });
-            
+
         console.log(formDataAddAchievement);
     }
 

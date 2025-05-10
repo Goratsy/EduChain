@@ -15,7 +15,6 @@ const UserPage: FunctionComponent<UserPageProps> = () => {
     const userAddress = params.address;
 
     let userInfo: UserInfo = useUserInfo(userAddress).data || {} as UserInfo;
-    console.log(userInfo);
 
     return (
         <>
