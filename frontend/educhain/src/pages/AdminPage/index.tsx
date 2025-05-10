@@ -7,11 +7,9 @@ import type { AddUniversityRequest } from "../../controllers/models";
 
 const AdminPage = () => {
     const adminAddress = useAdminAddress().data;
-    // 0xedbe7323c8169a92bbc036be6e87ca8504b47fae6f8261d5808eff0b072054e8
 
     const [valueAddresAdmin, setValueAddresAdmin] = useState<string>('');
     const { mutate: addUniversity } = useAddUniversity();
-
 
     useEffect(() => {
         setValueAddresAdmin(adminAddress || '');
@@ -35,15 +33,11 @@ const AdminPage = () => {
                 console.log('Университет добавлен:', data);
             },
             onError: (error: any) => {
-            
                 toast.error(`Ошибка: ${error.response.data.error}`, { autoClose: 4000, position: 'top-left', hideProgressBar: true, pauseOnHover: false })
                 console.error('Ошибка:', error);
             }
         });
-
-
     }
-
 
     return (
         <>
